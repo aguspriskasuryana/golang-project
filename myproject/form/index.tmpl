@@ -1,0 +1,23 @@
+{{ define "Index" }}
+    <h2> Registered </h2>
+    <table border="1">
+      <thead>
+      <tr>
+        <td>ID</td>
+        <td>Author</td>
+        <td>Body</td>
+        <td>Created</td>
+      </tr>
+       </thead>
+       <tbody>
+    {{ range . }}
+      <tr>
+        <td>{{ .Id }}</td>
+        <td> {{ .Author }} </td>
+        <td>{{ .Body }} </td> 
+        <td>{{ .Created }} </td> 
+      </tr>
+    {{ end }}
+       </tbody>
+    </table>
+{{ end }}
