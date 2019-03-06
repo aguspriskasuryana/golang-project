@@ -1,11 +1,15 @@
 package main
 
 import (
-	"fmt"
+	//"fmt"
 	"gopkg.in/olivere/elastic.v3"
 	"net/http"
-	"reflect"
+	//"reflect"
 )
+
+//func mainlistx(w http.ResponseWriter, r *http.Request) {
+//	tmpl.ExecuteTemplate(w, "New", nil)
+//}
 
 func mainlist(w http.ResponseWriter, r *http.Request) {
 	client, err := elastic.NewClient(elastic.SetURL("http://localhost:9200"))
@@ -17,6 +21,7 @@ func mainlist(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
+
 }
 
 func findAndPrintAppLogs(client *elastic.Client, w http.ResponseWriter, r *http.Request) error {
@@ -41,25 +46,6 @@ func findAndPrintAppLogs(client *elastic.Client, w http.ResponseWriter, r *http.
 		nr.Body = body
 		nr.Created = created
 		resx = append(resx, nr)
-	}
-
-	termQuery := elastic.MatchAllQuery{}
-
-	res, err := client.Search(indexName).
-		Index(indexName).
-		Query(termQuery).
-		Sort("created", false).
-		Do()
-
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("Logs found:")
-	var l LogNewsReceive
-	for _, item := range res.Each(reflect.TypeOf(l)) {
-		l := item.(LogNewsReceive)
-		fmt.Printf("created: %s ID: %s\n", l.Created, l.Id)
 	}
 
 	tmpl.ExecuteTemplate(w, "Index", resx)
