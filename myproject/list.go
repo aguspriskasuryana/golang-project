@@ -1,10 +1,10 @@
 package main
 
 import (
-	//"fmt"
+	"fmt"
 	"gopkg.in/olivere/elastic.v3"
 	"net/http"
-	//"reflect"
+	"reflect"
 )
 
 //func mainlistx(w http.ResponseWriter, r *http.Request) {
@@ -46,6 +46,25 @@ func findAndPrintAppLogs(client *elastic.Client, w http.ResponseWriter, r *http.
 		nr.Body = body
 		nr.Created = created
 		resx = append(resx, nr)
+	}
+
+	termQuery := elastic.MatchAllQuery{}
+
+	res, err := client.Search(indexName).
+		Index(indexName).
+		Query(termQuery).
+		Sort("time", false).
+		Do()
+
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Logs found:")
+	var l LogNewsReceive
+	for _, item := range res.Each(reflect.TypeOf(l)) {
+		l := item.(LogNewsReceive)
+		fmt.Printf("created: %s ID: %s\n", l.Created, l.Id)
 	}
 
 	tmpl.ExecuteTemplate(w, "Index", resx)
