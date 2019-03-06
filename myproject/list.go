@@ -5,6 +5,7 @@ import (
 	"gopkg.in/olivere/elastic.v3"
 	"net/http"
 	"reflect"
+	"strconv"
 )
 
 //func mainlistx(w http.ResponseWriter, r *http.Request) {
@@ -32,8 +33,8 @@ func findAndPrintAppLogs(client *elastic.Client, w http.ResponseWriter, r *http.
 	if err1 != nil {
 		panic(err1.Error())
 	}
-	nr := NewsReceive{}
-	resx := []NewsReceive{}
+	var authorMatch = make(map[int]string)
+	var bodyMatch = make(map[int]string)
 	for selDB.Next() {
 		var id int
 		var author, body, created string
@@ -41,11 +42,9 @@ func findAndPrintAppLogs(client *elastic.Client, w http.ResponseWriter, r *http.
 		if err1 != nil {
 			panic(err1.Error())
 		}
-		nr.Id = id
-		nr.Author = author
-		nr.Body = body
-		nr.Created = created
-		resx = append(resx, nr)
+		authorMatch[id] = author
+		bodyMatch[id] = body
+
 	}
 
 	termQuery := elastic.MatchAllQuery{}
@@ -53,7 +52,7 @@ func findAndPrintAppLogs(client *elastic.Client, w http.ResponseWriter, r *http.
 	res, err := client.Search(indexName).
 		Index(indexName).
 		Query(termQuery).
-		Sort("time", false).
+		Sort("time", true).
 		Do()
 
 	if err != nil {
@@ -61,12 +60,23 @@ func findAndPrintAppLogs(client *elastic.Client, w http.ResponseWriter, r *http.
 	}
 
 	fmt.Println("Logs found:")
+
+	nrfromelastic := NewsReceive{}
+	resxfromelastic := []NewsReceive{}
 	var l LogNewsReceive
 	for _, item := range res.Each(reflect.TypeOf(l)) {
 		l := item.(LogNewsReceive)
+
+		idint, _ := strconv.Atoi(l.Id)
+
+		nrfromelastic.Id = idint
+		nrfromelastic.Author = authorMatch[idint]
+		nrfromelastic.Body = bodyMatch[idint]
+		nrfromelastic.Created = l.Created
+		resxfromelastic = append(resxfromelastic, nrfromelastic)
 		fmt.Printf("created: %s ID: %s\n", l.Created, l.Id)
 	}
 
-	tmpl.ExecuteTemplate(w, "Index", resx)
+	tmpl.ExecuteTemplate(w, "Index", resxfromelastic)
 	return nil
 }
